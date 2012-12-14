@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using LibGit2Sharp.Tests.TestHelpers;
 using Xunit;
@@ -284,6 +285,29 @@ namespace LibGit2Sharp.Tests
                 Assert.Equal(head, newHead);
                 Assert.Equal(commit, repo.Lookup<Commit>(commit.Sha));
                 Assert.Equal("Ü message\n", commit.Message);
+            }
+        }
+
+        [Fact]
+        public void CanCreateATreeContainingATreeEntryWithLineFeed()
+        {
+            TemporaryCloneOfTestRepo scd = BuildTemporaryCloneOfTestRepo();
+
+            using (var repo = new Repository(scd.RepositoryPath))
+            {
+                var blob = repo.Lookup<Blob>(new ObjectId("a8233120f6ad708f843d861ce2b7228ec4e3dec6"));
+
+                const string treeEntryName = "lol\n";
+                TreeDefinition td = new TreeDefinition()
+                    .Add(treeEntryName, blob, Mode.NonExecutableFile);
+                Tree tree = repo.ObjectDatabase.CreateTree(td);
+
+                Assert.NotNull(tree);
+                var treeFromDB = repo.Lookup<Tree>(tree.Id);
+                Assert.NotNull(treeFromDB);
+                Assert.Equal(tree, treeFromDB);
+                Assert.Equal(blob, treeFromDB.Single().Target);
+                Assert.Equal(treeEntryName, treeFromDB.Single().Name);
             }
         }
     }
