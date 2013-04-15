@@ -579,6 +579,11 @@ namespace LibGit2Sharp
         {
             Ensure.ArgumentNotNullOrEmptyString(committishOrBranchSpec, "committishOrBranchSpec");
 
+            if(committishOrBranchSpec == "HEAD")
+            {
+                return Head;
+            }
+
             Branch branch = TryResolveBranch(committishOrBranchSpec);
 
             if (branch != null)
@@ -586,11 +591,14 @@ namespace LibGit2Sharp
                 return Checkout(branch, checkoutOptions, onCheckoutProgress);
             }
 
+            var previousHeadName = Info.IsHeadDetached ? Head.Tip.Sha : Head.Name;
+
             Commit commit = LookupCommit(committishOrBranchSpec);
             CheckoutTree(commit.Tree, checkoutOptions, onCheckoutProgress);
 
             // Update HEAD.
             Refs.UpdateTarget("HEAD", commit.Id.Sha);
+            LogCheckout(previousHeadName, commit.Id, committishOrBranchSpec);
 
             return Head;
         }
@@ -628,6 +636,13 @@ namespace LibGit2Sharp
                     "The tip of branch '{0}' is null. There's nothing to checkout.", branch.Name));
             }
 
+            if(branch.IsCurrentRepositoryHead)
+            {
+                return branch;
+            }
+
+            var previousHeadName = Info.IsHeadDetached ? Head.Tip.Sha : Head.Name;
+
             CheckoutTree(branch.Tip.Tree, checkoutOptions, onCheckoutProgress);
 
             // Update HEAD.
@@ -642,7 +657,24 @@ namespace LibGit2Sharp
                 Refs.UpdateTarget("HEAD", branch.Tip.Id.Sha);
             }
 
+            LogCheckout(previousHeadName, branch);
+
             return Head;
+        }
+
+        private void LogCheckout(string previousHeadName, Branch newHead)
+        {
+            LogCheckout(previousHeadName, newHead.Tip.Id, newHead.Name);
+        }
+
+        private void LogCheckout(string previousHeadName, ObjectId newHeadTip, string newHeadSpec)
+        {
+            // Compute reflog message
+            string reflogMessage = string.Format("checkout: moving from {0} to {1}", previousHeadName, newHeadSpec);
+
+            // Log checkout
+            Signature author = Config.BuildSignatureFromGlobalConfiguration(DateTimeOffset.Now, false);
+            Refs.Log(Refs.Head).Append(newHeadTip, author, reflogMessage);
         }
 
         /// <summary>
