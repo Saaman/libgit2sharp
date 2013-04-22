@@ -175,7 +175,7 @@ namespace LibGit2Sharp
 
                 if (reference is SymbolicReference)
                 {
-                    return new Branch(this, reference);
+                    return new AttachedHead(this, reference);
                 }
 
                 return new DetachedHead(this, reference);
@@ -555,7 +555,7 @@ namespace LibGit2Sharp
         {
             Ensure.ArgumentNotNullOrEmptyString(committishOrBranchSpec, "committishOrBranchSpec");
 
-            if(committishOrBranchSpec.ToUpperInvariant() == "HEAD")
+            if(committishOrBranchSpec == "HEAD")
             {
                 return Head;
             }
@@ -612,7 +612,7 @@ namespace LibGit2Sharp
                     "The tip of branch '{0}' is null. There's nothing to checkout.", branch.Name));
             }
 
-            if(branch.IsCurrentRepositoryHead && branch is DetachedHead)
+            if(branch is DetachedHead || branch is AttachedHead)
             {
                 return branch;
             }

@@ -742,10 +742,17 @@ namespace LibGit2Sharp.Tests
                 Assert.True(reflogEntry.To == reflogEntry.From);
                 Assert.Equal(string.Format("checkout: moving from master to {0}", master.Tip.Sha), reflogEntry.Message);
 
-                // Checkout "HEAD" => nothing should happen
+                // Checkout detached "HEAD" => nothing should happen
                 var reflogEntriesCount = repo.Refs.Log(repo.Refs.Head).Count();
 
-                // repo.Checkout(master);
+                repo.Checkout(repo.Head);
+
+                Assert.Equal(reflogEntriesCount, repo.Refs.Log(repo.Refs.Head).Count());
+
+                // Checkout attached "HEAD" => nothing should happen
+                repo.Checkout("master");
+                reflogEntriesCount = repo.Refs.Log(repo.Refs.Head).Count();
+
                 repo.Checkout(repo.Head);
 
                 Assert.Equal(reflogEntriesCount, repo.Refs.Log(repo.Refs.Head).Count());
@@ -753,6 +760,16 @@ namespace LibGit2Sharp.Tests
                 repo.Checkout("HEAD");
 
                 Assert.Equal(reflogEntriesCount, repo.Refs.Log(repo.Refs.Head).Count());
+            }
+        }
+
+        [Fact]
+        public void CheckoutLowerCasedHeadThrows()
+        {
+            string path = CloneStandardTestRepo();
+            using (var repo = new Repository(path))
+            {
+                Assert.Throws<LibGit2SharpException>(() => repo.Checkout("head"));
             }
         }
 
