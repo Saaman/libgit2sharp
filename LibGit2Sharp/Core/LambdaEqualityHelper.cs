@@ -23,7 +23,7 @@ namespace LibGit2Sharp.Core
                 return true;
             }
 
-            if (instance.GetType() != other.GetType())
+            if (!instance.GetType().IsAssignableFrom(other.GetType()) && !other.GetType().IsAssignableFrom(instance.GetType()))
             {
                 return false;
             }

@@ -850,6 +850,16 @@ namespace LibGit2Sharp.Tests
             }
         }
 
+        [Fact]
+        public void Toto()
+        {
+            using (var repo = new Repository(BareTestRepoPath))
+            {
+                // TODO : Xunit seems to bypass the IEquatable implementation when using Assert.Equal. Why?
+                Assert.True(Equals(repo.Branches["master"], repo.Head));
+            }
+        }
+
         private static T[] SortedBranches<T>(IEnumerable<Branch> branches, Func<Branch, T> selector)
         {
             return branches.OrderBy(b => b.CanonicalName, StringComparer.Ordinal).Select(selector).ToArray();
